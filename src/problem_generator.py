@@ -1,6 +1,6 @@
 import random
 import math
-
+import sympy as sp
 
 def _find_bracket(f, xl_start=-5.0, xu_start=5.0, max_expands=60):
     xl = float(xl_start)
@@ -51,6 +51,7 @@ def generate_linear():
     root = (c - b) / a
 
     return {
+        "mode": "single",
         "equation_str": equation_str,
         "f": f,
         "type": "linear",
@@ -82,10 +83,45 @@ def generate_quadratic():
         bracket = _find_bracket(f)
 
     return {
+        "mode": "single",
         "equation_str": equation_str,
         "f": f,
         "type": "quadratic",
         "bracket": bracket
+    }
+
+
+
+
+def generate_two_variable_solve_for_y():
+    x = sp.Symbol("x")
+
+    a = random.randint(1, 5)
+    b = random.randint(1, 6)
+    c = random.randint(-10, 10)
+    d = random.randint(-10, 10)
+
+    equation_str = f"{a}x^2 + {b}xy + {c} = {d}"
+
+    expected_raw = (d - a * x**2 - c) / (b * x)
+    expected_simplified = sp.simplify(expected_raw)
+
+    rhs_step = sp.simplify(d - a * x**2 - c)
+    step2 = f"{b}xy = {sp.sstr(rhs_step)}"
+    step3 = f"y = {sp.sstr(expected_simplified)}"
+
+    steps = [
+        f"{a}x^2 + {b}xy + {c} = {d}",
+        step2,
+        step3
+    ]
+
+    return {
+        "mode": "two",
+        "equation_str": equation_str,
+        "solve_for": "y",
+        "expected_expr_str": sp.sstr(expected_simplified),
+        "steps": steps
     }
 
 
@@ -94,6 +130,8 @@ def generate_problem(problem_type=None):
         return generate_linear()
     if problem_type == "quadratic":
         return generate_quadratic()
+    if problem_type == "two_y":
+        return generate_two_variable_solve_for_y()
 
     choice = random.choice(["linear", "quadratic"])
     if choice == "linear":
