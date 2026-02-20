@@ -11,8 +11,8 @@ def main():
     print("Solve the following equation:")
     print(problem["equation_str"])
 
-   
-    result = bisection(problem["f"], xl=-100, xu=100)
+    xl, xu = problem["bracket"]
+    result = bisection(problem["f"], xl=xl, xu=xu)
 
     print("\nBisection Result")
     print("Converged:", result["converged"])
