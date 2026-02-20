@@ -75,7 +75,13 @@ def run_single_variable():
     print("Answer tolerance:", abs_tol, "(abs),", rel_tol, "(rel)\n")
 
     while True:
-        problem = generate_problem()
+        while True:
+            try:
+                problem = generate_problem()
+                break
+            except ValueError:
+                pass
+
         print("Solve:", problem["equation_str"])
 
         print("Choose method:")
