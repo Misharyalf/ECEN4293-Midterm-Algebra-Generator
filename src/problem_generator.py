@@ -1,10 +1,39 @@
-"""
-Problem Generator Module
-Generates algebra problems and converts them to root-finding form f(x) = 0.
-"""
+ 
 
 import random
 import math
+
+
+def _find_bracket(f, xl_start=-5.0, xu_start=5.0, max_expands=25):
+     
+    xl = float(xl_start)
+    xu = float(xu_start)
+
+    f_xl = f(xl)
+    f_xu = f(xu)
+
+    if f_xl == 0:
+        return (xl, xl)
+    if f_xu == 0:
+        return (xu, xu)
+
+    for _ in range(max_expands):
+        if f_xl * f_xu < 0:
+            return (xl, xu)
+
+        width = xu - xl
+        xl = xl - width
+        xu = xu + width
+
+        f_xl = f(xl)
+        f_xu = f(xu)
+
+        if f_xl == 0:
+            return (xl, xl)
+        if f_xu == 0:
+            return (xu, xu)
+
+    raise ValueError("Could not find a bracketing interval for this generated function")
 
 
 def generate_linear():
@@ -14,9 +43,10 @@ def generate_linear():
 
     Internally converts to root-finding form:
         f(x) = a*x + b - c
+
+    Returns a guaranteed bracket for bisection.
     """
 
-    # Generate coefficients
     a = random.randint(1, 5)
     b = random.randint(-10, 10)
     c = random.randint(-10, 10)
@@ -26,18 +56,21 @@ def generate_linear():
 
     equation_str = f"{a}x + {b} = {c}"
 
+     
+    root = (c - b) / a
+    xl = root - 10.0
+    xu = root + 10.0
+
     return {
         "equation_str": equation_str,
         "f": f,
-        "type": "linear"
+        "type": "linear",
+        "bracket": (xl, xu)
     }
 
 
 def generate_quadratic():
-    """
-    Generate a quadratic equation of the form:
-        a*x^2 + b*x + c = 0
-    """
+     
 
     a = random.randint(1, 5)
     b = random.randint(-10, 10)
@@ -48,18 +81,18 @@ def generate_quadratic():
 
     equation_str = f"{a}x^2 + {b}x + {c} = 0"
 
+    bracket = _find_bracket(f)
+
     return {
         "equation_str": equation_str,
         "f": f,
-        "type": "quadratic"
+        "type": "quadratic",
+        "bracket": bracket
     }
 
 
 def generate_problem(problem_type=None):
-    """
-    Generate a problem based on requested type.
-    If no type is specified, randomly choose.
-    """
+     
 
     if problem_type == "linear":
         return generate_linear()
@@ -67,9 +100,7 @@ def generate_problem(problem_type=None):
     if problem_type == "quadratic":
         return generate_quadratic()
 
-    # Random selection if not specified
     choice = random.choice(["linear", "quadratic"])
-
     if choice == "linear":
         return generate_linear()
 
