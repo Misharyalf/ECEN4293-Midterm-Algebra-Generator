@@ -1,16 +1,16 @@
- 
-
 import random
 import math
 
 
-def _find_bracket(f, xl_start=-5.0, xu_start=5.0, max_expands=25):
-     
+def _find_bracket(f, xl_start=-5.0, xu_start=5.0, max_expands=60):
     xl = float(xl_start)
     xu = float(xu_start)
 
     f_xl = f(xl)
     f_xu = f(xu)
+
+    if not (math.isfinite(f_xl) and math.isfinite(f_xu)):
+        raise ValueError("Non-finite function value during bracketing")
 
     if f_xl == 0:
         return (xl, xl)
@@ -28,6 +28,9 @@ def _find_bracket(f, xl_start=-5.0, xu_start=5.0, max_expands=25):
         f_xl = f(xl)
         f_xu = f(xu)
 
+        if not (math.isfinite(f_xl) and math.isfinite(f_xu)):
+            raise ValueError("Non-finite function value during bracketing")
+
         if f_xl == 0:
             return (xl, xl)
         if f_xu == 0:
@@ -37,16 +40,6 @@ def _find_bracket(f, xl_start=-5.0, xu_start=5.0, max_expands=25):
 
 
 def generate_linear():
-    """
-    Generate a linear equation of the form:
-        a*x + b = c
-
-    Internally converts to root-finding form:
-        f(x) = a*x + b - c
-
-    Returns a guaranteed bracket for bisection.
-    """
-
     a = random.randint(1, 5)
     b = random.randint(-10, 10)
     c = random.randint(-10, 10)
@@ -55,33 +48,38 @@ def generate_linear():
         return a * x + b - c
 
     equation_str = f"{a}x + {b} = {c}"
-
-     
     root = (c - b) / a
-    xl = root - 10.0
-    xu = root + 10.0
 
     return {
         "equation_str": equation_str,
         "f": f,
         "type": "linear",
-        "bracket": (xl, xu)
+        "bracket": (root - 10.0, root + 10.0)
     }
 
 
 def generate_quadratic():
-     
-
     a = random.randint(1, 5)
-    b = random.randint(-10, 10)
-    c = random.randint(-10, 10)
+    r1 = random.randint(-8, 8)
+    r2 = random.randint(-8, 8)
+    while r2 == r1:
+        r2 = random.randint(-8, 8)
+
+    b = -a * (r1 + r2)
+    c = a * (r1 * r2)
 
     def f(x):
         return a * x**2 + b * x + c
 
     equation_str = f"{a}x^2 + {b}x + {c} = 0"
 
-    bracket = _find_bracket(f)
+    xl = min(r1, r2) - 2.0
+    xu = max(r1, r2) + 2.0
+
+    try:
+        bracket = _find_bracket(f, xl_start=xl, xu_start=xu)
+    except ValueError:
+        bracket = _find_bracket(f)
 
     return {
         "equation_str": equation_str,
@@ -92,16 +90,12 @@ def generate_quadratic():
 
 
 def generate_problem(problem_type=None):
-     
-
     if problem_type == "linear":
         return generate_linear()
-
     if problem_type == "quadratic":
         return generate_quadratic()
 
     choice = random.choice(["linear", "quadratic"])
     if choice == "linear":
         return generate_linear()
-
     return generate_quadratic()
